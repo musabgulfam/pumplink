@@ -38,6 +38,12 @@ yarn-error.*
 
 app-example
 
+# Ignore files and directories that EAS Build doesn't need to build your app
+/docs
+
 # Ignore native directories (if you are using EAS Build)
 /android
 /ios
+
+# Ignore test coverage reports
+/coverage
