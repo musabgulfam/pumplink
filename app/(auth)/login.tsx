@@ -4,15 +4,19 @@ import { AxiosResponse } from 'axios';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TextInput, useColorScheme, View } from 'react-native';
+
 
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const router = useRouter();
-
+    const colorScheme = useColorScheme();
+    const [loading, setLoading] = useState(false);
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, {
+            backgroundColor: colorScheme === 'dark' ? 'black' : 'white'
+        }]}>
             <Text style={styles.title}>Welcome Back 👋</Text>
             <TextInput
                 style={styles.input}
@@ -20,6 +24,9 @@ export default function Login() {
                 placeholderTextColor="#aaa"
                 value={email}
                 onChangeText={setEmail}
+                autoCapitalize='none'
+                autoCorrect={false}
+                autoComplete='off'
             />
             <TextInput
                 style={styles.input}
@@ -28,6 +35,9 @@ export default function Login() {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+                autoCapitalize='none'
+                autoCorrect={false}
+                autoComplete='off'
             />
             <View
                 style={{
@@ -53,9 +63,10 @@ export default function Login() {
                     alignItems: 'center',
                 }}
             >
-                <Button
+                {loading ? <ActivityIndicator /> : <Button
                     title="Login"
                     onPress={() => {
+                        setLoading(true);
                         // Normally you’d validate credentials with an API
                         api.post('/login', { email, password })
                             .then(
@@ -79,9 +90,12 @@ export default function Login() {
                             .catch((error) => {
                                 // Handle login error
                                 console.error(error);
+                            })
+                            .finally(() => {
+                                setLoading(false);
                             });
                     }}
-                />
+                />}
             </View>
         </View>
     );
@@ -104,7 +118,8 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         marginBottom: 15,
         borderWidth: 1,
-        borderColor: '#555',
+        borderColor: '#aaa',
+        color: '#aaa'
     },
     link: {
         marginTop: 15,

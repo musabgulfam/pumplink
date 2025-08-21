@@ -7,7 +7,7 @@ import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useEffect, useRef, useState } from 'react';
-import { Platform, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { Alert, Platform, StyleSheet, Text, useColorScheme, View } from 'react-native';
 
 export default function Timer() {
     const colorScheme = useColorScheme();
@@ -15,10 +15,49 @@ export default function Timer() {
     const [state, setState] = useState<'on' | 'off'>('off');
     const [isDeviceActivated, setIsDeviceActivated] = useState(false);
     const [activeUntilTime, setActiveUntilTime] = useState<Date | null>(null);
+    const [remainingTime, setRemainingTime] = useState<string>('');
+    // Countdown timer effect
+    useEffect(() => {
+        if (!activeUntilTime) {
+            setRemainingTime('');
+            setIsDeviceActivated(false);
+            return;
+        }
+        // If timer is in the future, activate device
+        if (activeUntilTime.getTime() > Date.now()) {
+            setIsDeviceActivated(true);
+        } else {
+            setIsDeviceActivated(false);
+            setRemainingTime('');
+            return;
+        }
+        const interval = setInterval(() => {
+            const now = new Date();
+            const diff = activeUntilTime.getTime() - now.getTime();
+            if (diff <= 0) {
+                setRemainingTime('00:00');
+                clearInterval(interval);
+                setIsDeviceActivated(false);
+                setActiveUntilTime(null);
+                return;
+            }
+            const totalSeconds = Math.floor(diff / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            setRemainingTime(
+                `${minutes.toString().padStart(2, '0')}:` +
+                `${seconds.toString().padStart(2, '0')}`
+            );
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [activeUntilTime]);
+    // On mount, check if activeUntilTime is in the future and restore timer if needed
+    useEffect(() => {
+        if (activeUntilTime && activeUntilTime.getTime() > Date.now()) {
+            setIsDeviceActivated(true);
+        }
+    }, []);
     const progressText = useRef('');
-
-    const [expoPushToken, setExpoPushToken] = useState<string>('');
-    const [notification, setNotification] = useState<Notifications.Notification | undefined>();
 
     useEffect(() => {
         let isActive = true;
@@ -27,7 +66,6 @@ export default function Timer() {
             const token = await registerForPushNotificationsAsync();
             console.log('Expo push token:', token);
             if (token && isActive) {
-                setExpoPushToken(token);
                 try {
                     await sendPushTokenToBackend(token);
                 } catch (error: any) {
@@ -45,7 +83,6 @@ export default function Timer() {
 
         // Notification listeners
         const notificationListener = Notifications.addNotificationReceivedListener((n) => {
-            if (isActive) setNotification(n);
         });
 
         const responseListener = Notifications.addNotificationResponseReceivedListener((r) => {
@@ -68,7 +105,7 @@ export default function Timer() {
             }
 
             const ws = new WebSocket(
-                `ws://${Platform.OS === 'android' ? '10.0.2.2:8080' : 'localhost:8080'}/api/v1/ws`,
+                `wss://pumplink-backend-production.up.railway.app/api/v1/ws`,
             );
 
             ws.onopen = () => {
@@ -108,9 +145,7 @@ export default function Timer() {
                             onPress={async () => {
                                 const token = await SecureStore.getItemAsync('authToken');
                                 if (!token) return;
-                                console.log('Activating device with token:', token);
                                 const duration = parseInt(progressText.current.split(' ')[0]);
-                                console.log(duration);
                                 try {
                                     // Activate device
                                     await api.post(
@@ -120,7 +155,10 @@ export default function Timer() {
                                             duration,
                                         },
                                         { headers: { Authorization: `Bearer ${token}` } },
-                                    );
+                                    )
+                                        .catch((error) => {
+                                            Alert.alert('Error', error.message);
+                                        });
                                     setIsDeviceActivated(true);
                                     // Fetch device status
                                     const statusRes: AxiosResponse<{
@@ -131,9 +169,15 @@ export default function Timer() {
                                         headers: { Authorization: `Bearer ${token}` },
                                     });
                                     if (statusRes.data) {
-                                        setActiveUntilTime(
-                                            new Date(statusRes.data.active_until ?? '') || null,
-                                        );
+                                        const untilRaw = statusRes.data.active_until;
+                                        let untilDate: Date | null = null;
+                                        if (untilRaw) {
+                                            const d = new Date(untilRaw);
+                                            if (!isNaN(d.getTime())) {
+                                                untilDate = d;
+                                            }
+                                        }
+                                        setActiveUntilTime(untilDate);
                                     }
                                 } catch (error: any) {
                                     if (error?.response?.status === 401) {
@@ -157,7 +201,13 @@ export default function Timer() {
                     </View>
                 </>
             ) : (
-                <Text>{activeUntilTime?.toString()}</Text>
+                <View style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                }}>
+                    <Text style={{ color: '#FF8A00', fontSize: 100, fontWeight: 'bold', fontStyle: 'italic' }}>{remainingTime}</Text>
+                </View>
             )}
         </View>
     );
@@ -192,7 +242,6 @@ async function sendPushTokenToBackend(expoPushToken: string) {
 }
 
 async function registerForPushNotificationsAsync() {
-    console.log('Registering for push notifications...');
     let token;
     if (Platform.OS === 'android') {
         console.log('Setting up Android notification channel...');
