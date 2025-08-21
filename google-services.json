@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "122956585813",
+    "project_id": "bleaum-e509a",
+    "storage_bucket": "bleaum-e509a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:122956585813:android:c4c453700612e8462c2ddc",
+        "android_client_info": {
+          "package_name": "com.m_gulfam.pumplink"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "122956585813-ssulimdt1502ae7a7vkf3m7q8ohkfm1r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBiF9dyTzeMt2I0o-QH6C_4TlejFekjjAg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "122956585813-dl88m8dpbkqajnps5g8mpfcaidstucck.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "122956585813-2jlc7kjkqo3kmg5jn4ov8iqvorhummqj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.bleaum.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:122956585813:android:c5a3eb3976be1e122c2ddc",
+        "android_client_info": {
+          "package_name": "com.mgulfam.pumplink"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "122956585813-ssulimdt1502ae7a7vkf3m7q8ohkfm1r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBiF9dyTzeMt2I0o-QH6C_4TlejFekjjAg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "122956585813-dl88m8dpbkqajnps5g8mpfcaidstucck.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "122956585813-2jlc7kjkqo3kmg5jn4ov8iqvorhummqj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.bleaum.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

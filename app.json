@@ -17,7 +17,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.m_gulfam.pumplink"
+      "package": "com.m_gulfam.pumplink",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
@@ -37,7 +38,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
@@ -47,6 +49,9 @@
       "eas": {
         "projectId": "a4d89be2-6007-4ca6-a98e-c60678d2c235"
       }
+    },
+    "notification": {
+      "color": "#FF8A00"
     }
   }
 }
