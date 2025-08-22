@@ -13,7 +13,7 @@ export function Button({
         <TouchableOpacity
             style={[
                 styles.buttonStyle,
-                { 
+                {
                     backgroundColor: title === 'Logout' ? '#555' : '#FF8A00',
                     shadowColor: title === 'Logout' ? '#444' : '#FF8A00',
                 },
