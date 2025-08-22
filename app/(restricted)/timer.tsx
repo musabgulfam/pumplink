@@ -7,7 +7,15 @@ import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import {
+    ActivityIndicator,
+    Alert,
+    Platform,
+    StyleSheet,
+    Text,
+    useColorScheme,
+    View,
+} from 'react-native';
 
 export default function Timer() {
     const colorScheme = useColorScheme();
