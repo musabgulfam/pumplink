@@ -7,7 +7,7 @@ import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Platform, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, StyleSheet, Text, useColorScheme, View } from 'react-native';
 
 export default function Timer() {
     const colorScheme = useColorScheme();
@@ -162,7 +162,7 @@ export default function Timer() {
         <View style={{ flex: 1, backgroundColor: colorScheme === 'dark' ? 'black' : 'white' }}>
             {loading ? (
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <Text style={{ color: '#FF8A00', fontSize: 30 }}>Loading...</Text>
+                    <ActivityIndicator size="large" color="#FF8A00" />
                 </View>
             ) : !isDeviceActivated && !activeUntilTime ? (
                 <>
@@ -191,7 +191,7 @@ export default function Timer() {
                                         .catch((error) => {
                                             Alert.alert('Error', error.message);
                                         });
-                                    setIsDeviceActivated(true);
+                                    setLoading(true);
                                     // Fetch device status
                                     const statusRes: AxiosResponse<{
                                         device_id: number;
@@ -201,6 +201,8 @@ export default function Timer() {
                                         headers: { Authorization: `Bearer ${token}` },
                                     });
                                     if (statusRes.data) {
+                                        setLoading(false);
+                                        setIsDeviceActivated(true);
                                         const untilRaw = statusRes.data.active_until;
                                         let untilDate: Date | null = null;
                                         if (untilRaw) {
@@ -266,9 +268,7 @@ const styles = StyleSheet.create({
 });
 
 async function sendPushTokenToBackend(expoPushToken: string) {
-    console.log('Sending push token to backend:', expoPushToken);
     try {
-        console.log('Sending push token to backend:', expoPushToken);
         const token = await SecureStore.getItemAsync('authToken');
         if (!token) return;
 
@@ -320,7 +320,6 @@ async function registerForPushNotificationsAsync() {
         if (!projectId) throw new Error('Project ID not found');
 
         token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-        console.log('Expo push token:', token);
     } catch (e) {
         console.error('Error getting push token:', e);
     }
