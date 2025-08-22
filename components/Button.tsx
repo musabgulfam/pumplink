@@ -13,7 +13,10 @@ export function Button({
         <TouchableOpacity
             style={[
                 styles.buttonStyle,
-                { backgroundColor: title === 'Logout' ? '#555' : '#FF8A00' },
+                { 
+                    backgroundColor: title === 'Logout' ? '#555' : '#FF8A00',
+                    shadowColor: title === 'Logout' ? '#444' : '#FF8A00',
+                },
                 viewStyle,
             ]}
             onPress={onPress}
@@ -29,7 +32,6 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         padding: 20,
         paddingHorizontal: 40,
-        shadowColor: '#FF8A00',
         shadowOffset: {
             width: 0,
             height: 3,
