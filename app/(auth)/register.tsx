@@ -3,7 +3,15 @@ import { Button } from '@/components';
 import { AxiosResponse } from 'axios';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, useColorScheme, View } from 'react-native';
+import {
+    ActivityIndicator,
+    Alert,
+    StyleSheet,
+    Text,
+    TextInput,
+    useColorScheme,
+    View,
+} from 'react-native';
 
 export default function Register() {
     const router = useRouter();
@@ -13,26 +21,37 @@ export default function Register() {
     const colorScheme = useColorScheme();
 
     return (
-        <View style={[styles.container, {
-            backgroundColor: colorScheme === 'dark' ? 'black' : 'white'
-        }]}>
+        <View
+            style={[
+                styles.container,
+                {
+                    backgroundColor: colorScheme === 'dark' ? 'black' : 'white',
+                },
+            ]}
+        >
             <Text style={styles.title}>Create Account</Text>
             <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colorScheme === 'dark' ? 'white' : 'black' }]}
                 placeholder="Email"
                 placeholderTextColor="#aaa"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="off"
             />
 
             <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colorScheme === 'dark' ? 'white' : 'black' }]}
                 placeholder="Password"
                 placeholderTextColor="#aaa"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="off"
             />
 
             <View
@@ -49,45 +68,51 @@ export default function Register() {
                             color: '#555',
                         }}
                     >
-                        Register
+                        Login
                     </Text>
                 </Text>
             </View>
-            <View style={{
-                marginTop: 20,
-                alignItems: 'center',
-            }}>
-                {loading ? <ActivityIndicator /> : <Button
-                    title="Register"
-                    onPress={() => {
-                        setLoading(true);
-                        api.post('/register', { email, password })
-                            .then(
-                                (
-                                    response: AxiosResponse<{
-                                        message: string;
-                                        user: {
-                                            created_at: string;
-                                            email: string;
-                                            id: string;
-                                            updated_at: string;
-                                        };
-                                    }>,
-                                ) => {
-                                    // Handle successful registration
-                                    router.push('/(auth)/login');
-                                    Alert.alert('Success', response.data.message);
-                                },
-                            )
-                            .catch((error) => {
-                                // Handle registration error
-                                console.error(error);
-                            })
-                            .finally(() => {
-                                setLoading(false);
-                            });
-                    }}
-                />}
+            <View
+                style={{
+                    marginTop: 20,
+                    alignItems: 'center',
+                }}
+            >
+                {loading ? (
+                    <ActivityIndicator />
+                ) : (
+                    <Button
+                        title="Register"
+                        onPress={() => {
+                            setLoading(true);
+                            api.post('/register', { email, password })
+                                .then(
+                                    (
+                                        response: AxiosResponse<{
+                                            message: string;
+                                            user: {
+                                                created_at: string;
+                                                email: string;
+                                                id: string;
+                                                updated_at: string;
+                                            };
+                                        }>,
+                                    ) => {
+                                        // Handle successful registration
+                                        router.push('/(auth)/login');
+                                        Alert.alert('Success', response.data.message);
+                                    },
+                                )
+                                .catch((error) => {
+                                    // Handle registration error
+                                    console.error(error);
+                                })
+                                .finally(() => {
+                                    setLoading(false);
+                                });
+                        }}
+                    />
+                )}
             </View>
         </View>
     );
