@@ -39,7 +39,13 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "sounds": ["./assets/sounds/notification.wav"]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
@@ -51,7 +57,8 @@
       }
     },
     "notification": {
-      "color": "#FF8A00"
+      "color": "#FF8A00",
+      "icon": "./assets/images/icon-notification.png"
     }
   }
 }

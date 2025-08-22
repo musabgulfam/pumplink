@@ -16,6 +16,7 @@ export default function Timer() {
     const [isDeviceActivated, setIsDeviceActivated] = useState(false);
     const [activeUntilTime, setActiveUntilTime] = useState<Date | null>(null);
     const [remainingTime, setRemainingTime] = useState<string>('');
+    const [loading, setLoading] = useState(true);
     // Countdown timer effect
     useEffect(() => {
         if (!activeUntilTime) {
@@ -23,7 +24,6 @@ export default function Timer() {
             setIsDeviceActivated(false);
             return;
         }
-        // If timer is in the future, activate device
         if (activeUntilTime.getTime() > Date.now()) {
             setIsDeviceActivated(true);
         } else {
@@ -46,16 +46,46 @@ export default function Timer() {
             const seconds = totalSeconds % 60;
             setRemainingTime(
                 `${minutes.toString().padStart(2, '0')}:` +
-                `${seconds.toString().padStart(2, '0')}`
+                    `${seconds.toString().padStart(2, '0')}`,
             );
         }, 1000);
         return () => clearInterval(interval);
     }, [activeUntilTime]);
     // On mount, check if activeUntilTime is in the future and restore timer if needed
     useEffect(() => {
-        if (activeUntilTime && activeUntilTime.getTime() > Date.now()) {
-            setIsDeviceActivated(true);
-        }
+        const checkDeviceStatus = async () => {
+            const token = await SecureStore.getItemAsync('authToken');
+            if (!token) {
+                setLoading(false);
+                return;
+            }
+            try {
+                const statusRes: AxiosResponse<{
+                    device_id: number;
+                    status: string;
+                    active_until?: string;
+                }> = await api.get('/device/1/status', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (statusRes.data && statusRes.data.active_until) {
+                    const untilDate = new Date(statusRes.data.active_until);
+                    if (!isNaN(untilDate.getTime()) && untilDate.getTime() > Date.now()) {
+                        setActiveUntilTime(untilDate);
+                        setIsDeviceActivated(true);
+                    }
+                }
+            } catch (error) {
+                if ((error as any)?.response?.status === 401) {
+                    await SecureStore.deleteItemAsync('authToken');
+                    router.replace('/(auth)/login');
+                } else {
+                    console.error(error);
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+        checkDeviceStatus();
     }, []);
     const progressText = useRef('');
 
@@ -82,8 +112,7 @@ export default function Timer() {
         registerToken();
 
         // Notification listeners
-        const notificationListener = Notifications.addNotificationReceivedListener((n) => {
-        });
+        const notificationListener = Notifications.addNotificationReceivedListener((n) => {});
 
         const responseListener = Notifications.addNotificationResponseReceivedListener((r) => {
             console.log('Notification response:', r);
@@ -104,9 +133,7 @@ export default function Timer() {
                 return;
             }
 
-            const ws = new WebSocket(
-                `wss://pumplink-backend-production.up.railway.app/api/v1/ws`,
-            );
+            const ws = new WebSocket(`wss://pumplink-backend-production.up.railway.app/api/v1/ws`);
 
             ws.onopen = () => {
                 console.log('WebSocket connected!');
@@ -133,7 +160,11 @@ export default function Timer() {
 
     return (
         <View style={{ flex: 1, backgroundColor: colorScheme === 'dark' ? 'black' : 'white' }}>
-            {!isDeviceActivated && !activeUntilTime ? (
+            {loading ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ color: '#FF8A00', fontSize: 30 }}>Loading...</Text>
+                </View>
+            ) : !isDeviceActivated && !activeUntilTime ? (
                 <>
                     <Dial
                         state={state}
@@ -148,14 +179,15 @@ export default function Timer() {
                                 const duration = parseInt(progressText.current.split(' ')[0]);
                                 try {
                                     // Activate device
-                                    await api.post(
-                                        '/activate',
-                                        {
-                                            device_id: 1,
-                                            duration,
-                                        },
-                                        { headers: { Authorization: `Bearer ${token}` } },
-                                    )
+                                    await api
+                                        .post(
+                                            '/activate',
+                                            {
+                                                device_id: 1,
+                                                duration,
+                                            },
+                                            { headers: { Authorization: `Bearer ${token}` } },
+                                        )
                                         .catch((error) => {
                                             Alert.alert('Error', error.message);
                                         });
@@ -201,12 +233,23 @@ export default function Timer() {
                     </View>
                 </>
             ) : (
-                <View style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                }}>
-                    <Text style={{ color: '#FF8A00', fontSize: 100, fontWeight: 'bold', fontStyle: 'italic' }}>{remainingTime}</Text>
+                <View
+                    style={{
+                        flex: 1,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                    }}
+                >
+                    <Text
+                        style={{
+                            color: '#FF8A00',
+                            fontSize: 100,
+                            fontWeight: 'bold',
+                            fontStyle: 'italic',
+                        }}
+                    >
+                        {remainingTime}
+                    </Text>
                 </View>
             )}
         </View>
