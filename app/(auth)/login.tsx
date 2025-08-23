@@ -4,7 +4,15 @@ import { AxiosResponse } from 'axios';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, useColorScheme, View } from 'react-native';
+import {
+    ActivityIndicator,
+    Alert,
+    StyleSheet,
+    Text,
+    TextInput,
+    useColorScheme,
+    View,
+} from 'react-native';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -96,6 +104,11 @@ export default function Login() {
                                 )
                                 .catch((error) => {
                                     // Handle login error
+                                    let message = 'Login failed. Please try again.';
+                                    if (error?.response?.data?.error) {
+                                        message = error.response.data.error;
+                                    }
+                                    Alert.alert('Login Error', message);
                                     console.error(error);
                                 })
                                 .finally(() => {

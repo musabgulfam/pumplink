@@ -105,6 +105,11 @@ export default function Register() {
                                 )
                                 .catch((error) => {
                                     // Handle registration error
+                                    let message = 'Registration failed. Please try again.';
+                                    if (error?.response?.data?.error) {
+                                        message = error.response.data.error;
+                                    }
+                                    Alert.alert('Registration Error', message);
                                     console.error(error);
                                 })
                                 .finally(() => {
