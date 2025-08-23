@@ -1,121 +1,60 @@
 import { api } from '@/api';
 import { Button } from '@/components';
 import Dial from '@/components/Dial';
-import { AxiosResponse } from 'axios';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import { useEffect, useRef, useState } from 'react';
-import {
-    ActivityIndicator,
-    Alert,
-    Platform,
-    StyleSheet,
-    Text,
-    useColorScheme,
-    View,
-} from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Platform, StyleSheet, useColorScheme, View } from 'react-native';
 
 export default function Timer() {
     const colorScheme = useColorScheme();
     const router = useRouter();
     const [state, setState] = useState<'on' | 'off'>('off');
-    const [isDeviceActivated, setIsDeviceActivated] = useState(false);
-    const [activeUntilTime, setActiveUntilTime] = useState<Date | null>(null);
-    const [remainingTime, setRemainingTime] = useState<string>('');
-    const [loading, setLoading] = useState(true);
-    // Countdown timer effect
-    useEffect(() => {
-        if (!activeUntilTime) {
-            setRemainingTime('');
-            setIsDeviceActivated(false);
-            return;
-        }
-        if (activeUntilTime.getTime() > Date.now()) {
-            setIsDeviceActivated(true);
-        } else {
-            setIsDeviceActivated(false);
-            setRemainingTime('');
-            return;
-        }
-        const interval = setInterval(() => {
-            const now = new Date();
-            const diff = activeUntilTime.getTime() - now.getTime();
-            if (diff <= 0) {
-                setRemainingTime('00:00');
-                clearInterval(interval);
-                setIsDeviceActivated(false);
-                setActiveUntilTime(null);
-                return;
-            }
-            const totalSeconds = Math.floor(diff / 1000);
-            const minutes = Math.floor(totalSeconds / 60);
-            const seconds = totalSeconds % 60;
-            setRemainingTime(
-                `${minutes.toString().padStart(2, '0')}:` +
-                    `${seconds.toString().padStart(2, '0')}`,
-            );
-        }, 1000);
-        return () => clearInterval(interval);
-    }, [activeUntilTime]);
-    // On mount, check if activeUntilTime is in the future and restore timer if needed
-    useEffect(() => {
-        const checkDeviceStatus = async () => {
-            const token = await SecureStore.getItemAsync('authToken');
-            if (!token) {
-                setLoading(false);
-                return;
-            }
+    const [loading, setLoading] = useState(false);
+
+    const progressText = useRef('');
+
+    const sendPushTokenToBackend = useCallback(
+        async (expoPushToken: string) => {
             try {
-                const statusRes: AxiosResponse<{
-                    device_id: number;
-                    status: string;
-                    active_until?: string;
-                }> = await api.get('/device/1/status', {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                if (statusRes.data && statusRes.data.active_until) {
-                    const untilDate = new Date(statusRes.data.active_until);
-                    if (!isNaN(untilDate.getTime()) && untilDate.getTime() > Date.now()) {
-                        setActiveUntilTime(untilDate);
-                        setIsDeviceActivated(true);
-                    }
-                }
+                const token = await SecureStore.getItemAsync('authToken');
+                if (!token) return;
+                await api.post(
+                    '/register-push-token',
+                    { token: expoPushToken },
+                    { headers: { Authorization: `Bearer ${token}` } },
+                );
+                console.log('Push token registered successfully');
             } catch (error) {
-                if ((error as any)?.response?.status === 401) {
+                console.error('Failed to register push token:', error);
+                await SecureStore.deleteItemAsync('authToken');
+                router.replace('/(auth)/login');
+            }
+        },
+        [router],
+    );
+
+    const registerToken = useCallback(async () => {
+        let isActive = true;
+        const token = await registerForPushNotificationsAsync();
+        console.log('Expo push token:', token);
+        if (token && isActive) {
+            try {
+                await sendPushTokenToBackend(token);
+            } catch (error: any) {
+                if (error?.response?.status === 401) {
                     await SecureStore.deleteItemAsync('authToken');
                     router.replace('/(auth)/login');
                 } else {
                     console.error(error);
                 }
-            } finally {
-                setLoading(false);
             }
-        };
-        checkDeviceStatus();
-    }, []);
-    const progressText = useRef('');
+        }
+    }, [sendPushTokenToBackend, router]);
 
     useEffect(() => {
-        let isActive = true;
-
-        const registerToken = async () => {
-            const token = await registerForPushNotificationsAsync();
-            console.log('Expo push token:', token);
-            if (token && isActive) {
-                try {
-                    await sendPushTokenToBackend(token);
-                } catch (error: any) {
-                    if (error?.response?.status === 401) {
-                        await SecureStore.deleteItemAsync('authToken');
-                        router.replace('/(auth)/login');
-                    } else {
-                        console.error(error);
-                    }
-                }
-            }
-        };
         console.log('Registering push token...');
         registerToken();
 
@@ -127,11 +66,10 @@ export default function Timer() {
         });
 
         return () => {
-            isActive = false;
             notificationListener.remove();
             responseListener.remove();
         };
-    }, []);
+    }, [registerToken]);
 
     useEffect(() => {
         const setupWebSocket = async () => {
@@ -172,7 +110,7 @@ export default function Timer() {
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                     <ActivityIndicator size="large" color="#FF8A00" />
                 </View>
-            ) : !isDeviceActivated && !activeUntilTime ? (
+            ) : (
                 <>
                     <Dial
                         state={state}
@@ -183,7 +121,9 @@ export default function Timer() {
                             title="GO"
                             onPress={async () => {
                                 const token = await SecureStore.getItemAsync('authToken');
-                                if (!token) return;
+                                if (!token) {
+                                    return;
+                                }
                                 const duration = parseInt(progressText.current.split(' ')[0]);
                                 try {
                                     // Activate device
@@ -199,28 +139,6 @@ export default function Timer() {
                                         .catch((error) => {
                                             Alert.alert('Error', error.message);
                                         });
-                                    setLoading(true);
-                                    // Fetch device status
-                                    const statusRes: AxiosResponse<{
-                                        device_id: number;
-                                        status: string;
-                                        active_until?: string;
-                                    }> = await api.get('/device/1/status', {
-                                        headers: { Authorization: `Bearer ${token}` },
-                                    });
-                                    if (statusRes.data) {
-                                        setLoading(false);
-                                        setIsDeviceActivated(true);
-                                        const untilRaw = statusRes.data.active_until;
-                                        let untilDate: Date | null = null;
-                                        if (untilRaw) {
-                                            const d = new Date(untilRaw);
-                                            if (!isNaN(d.getTime())) {
-                                                untilDate = d;
-                                            }
-                                        }
-                                        setActiveUntilTime(untilDate);
-                                    }
                                 } catch (error: any) {
                                     if (error?.response?.status === 401) {
                                         await SecureStore.deleteItemAsync('authToken');
@@ -242,25 +160,6 @@ export default function Timer() {
                         />
                     </View>
                 </>
-            ) : (
-                <View
-                    style={{
-                        flex: 1,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                    }}
-                >
-                    <Text
-                        style={{
-                            color: '#FF8A00',
-                            fontSize: 100,
-                            fontWeight: 'bold',
-                            fontStyle: 'italic',
-                        }}
-                    >
-                        {remainingTime}
-                    </Text>
-                </View>
             )}
         </View>
     );
@@ -275,22 +174,8 @@ const styles = StyleSheet.create({
     },
 });
 
-async function sendPushTokenToBackend(expoPushToken: string) {
-    try {
-        const token = await SecureStore.getItemAsync('authToken');
-        if (!token) return;
 
-        await api.post(
-            '/register-push-token',
-            { token: expoPushToken },
-            { headers: { Authorization: `Bearer ${token}` } },
-        );
-
-        console.log('Push token registered successfully');
-    } catch (error) {
-        console.error('Failed to register push token:', error);
-    }
-}
+// Move this function inside the Timer component to use the router instance directly
 
 async function registerForPushNotificationsAsync() {
     let token;
