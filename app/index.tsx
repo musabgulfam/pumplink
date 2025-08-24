@@ -4,14 +4,14 @@ import * as SecureStore from 'expo-secure-store';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
-// Place this at the top level of your app (not inside a component)
+// Set notification handler at the top level (this is fine)
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true, // Show notification as an alert in foreground
-    shouldPlaySound: true, // Play sound if notification has one
-    shouldSetBadge: true, // Set app badge count
-    shouldShowBanner: true, // Show banner for notification
-    shouldShowList: true, // Show notification in notification list
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -20,6 +20,15 @@ export default function Index() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // Set up notification channel (must be inside useEffect)
+        Notifications.setNotificationChannelAsync('default', {
+            name: 'default',
+            importance: Notifications.AndroidImportance.MAX,
+            sound: 'notification.wav',
+            vibrationPattern: [0, 250, 250, 250],
+            lightColor: '#FF8A00',
+        });
+
         (async () => {
             const token = await SecureStore.getItemAsync('authToken');
             if (token) {
@@ -33,13 +42,7 @@ export default function Index() {
 
     if (loading) {
         return (
-            <View
-                style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                }}
-            >
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <ActivityIndicator size="large" color={'#FF8A00'} />
             </View>
         );
