@@ -11,7 +11,6 @@ import { ActivityIndicator, Alert, Platform, StyleSheet, useColorScheme, View } 
 export default function Timer() {
     const colorScheme = useColorScheme();
     const router = useRouter();
-    const [state, setState] = useState<'on' | 'off'>('off');
     const [loading, setLoading] = useState(false);
 
     const progressText = useRef('');
@@ -71,39 +70,6 @@ export default function Timer() {
         };
     }, [registerToken]);
 
-    useEffect(() => {
-        const setupWebSocket = async () => {
-            const token = await SecureStore.getItemAsync('authToken');
-            if (!token) {
-                router.replace('/(auth)/login');
-                return;
-            }
-
-            const ws = new WebSocket(`wss://pumplink-backend-production.up.railway.app/api/v1/ws`);
-
-            ws.onopen = () => {
-                console.log('WebSocket connected!');
-                ws.send(token);
-            };
-
-            ws.onmessage = (event: { data: 'on' | 'off' }) => {
-                setState(event.data || 'off');
-            };
-
-            ws.onerror = (error) => console.error('WebSocket error:', error);
-
-            ws.onclose = (msg) => {
-                console.log('WebSocket closed:', msg.code, msg.reason);
-                if (msg.code === 1008) {
-                    SecureStore.deleteItemAsync('authToken');
-                    router.replace('/(auth)/login');
-                }
-            };
-        };
-
-        setupWebSocket();
-    }, []);
-
     return (
         <View style={{ flex: 1, backgroundColor: colorScheme === 'dark' ? 'black' : 'white' }}>
             {loading ? (
@@ -113,7 +79,7 @@ export default function Timer() {
             ) : (
                 <>
                     <Dial
-                        state={state}
+                        strokeColor={'#FF8A00'}
                         onProgressChange={(progress) => (progressText.current = progress)}
                     />
                     <View style={styles.buttonContainer}>
@@ -173,7 +139,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
     },
 });
-
 
 // Move this function inside the Timer component to use the router instance directly
 
