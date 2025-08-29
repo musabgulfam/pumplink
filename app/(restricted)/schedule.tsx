@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ScheduleScreen = () => {
     const router = useRouter();
@@ -92,15 +93,12 @@ const ScheduleScreen = () => {
 
     return (
         <View style={{ flex: 1, backgroundColor: colorScheme === 'dark' ? 'black' : 'white' }}>
-            <View
+            <View style={{
+                flex: 1
+            }}>
+                <SafeAreaView
                 style={{
-                    position: 'absolute',
-                    top: 100,
-                    left: 20,
-                    borderWidth: 2,
-                    borderColor: '#FF8A00',
-                    padding: 10,
-                    borderRadius: 12,
+                    padding: 20,
                 }}
             >
                 <Text
@@ -123,14 +121,23 @@ const ScheduleScreen = () => {
                 >
                     Selected Time:{' '}
                     <Text style={{ color: '#FF8A00', fontWeight: 'bold' }}>
-                        {time.toLocaleTimeString()}
+                        {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                     </Text>
                 </Text>
-            </View>
-            <Dial
+            </SafeAreaView>
+            <View style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0
+            }}>
+                <Dial
                 strokeColor={'#555'}
                 onProgressChange={(progress) => (progressText.current = progress)}
-            />
+                />
+            </View>
+            </View>
             <View style={{ paddingBottom: 20 }}>
                 <View>
                     <View
@@ -145,10 +152,11 @@ const ScheduleScreen = () => {
                             onPress={() => setShowPicker(true)}
                             viewStyle={{
                                 width: '40%',
-                                padding: 20,
+                                padding: 5,
                                 backgroundColor: undefined,
                                 borderWidth: 1,
                                 borderColor: colorScheme === 'dark' ? 'white' : 'black',
+                                paddingHorizontal: 0
                             }}
                         />
                         <Button
@@ -156,10 +164,11 @@ const ScheduleScreen = () => {
                             onPress={() => setShowTimePicker(true)}
                             viewStyle={{
                                 width: '40%',
-                                padding: 20,
+                                padding: 5,
                                 backgroundColor: undefined,
                                 borderWidth: 1,
                                 borderColor: colorScheme === 'dark' ? 'white' : 'black',
+                                paddingHorizontal: 0
                             }}
                         />
                     </View>
