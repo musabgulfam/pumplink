@@ -12,28 +12,28 @@ export default function TabLayout() {
                 screenOptions={{
                     tabBarActiveTintColor: '#FF8A00',
                     headerShown: false,
-                tabBarStyle: { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' },
-            }}
-        >
-            <Tabs.Screen
-                name="timer"
-                options={{
-                    title: 'Timer',
-                    tabBarIcon: ({ color }) => (
-                        <FontAwesome size={28} name="clock-o" color={color} />
-                    ),
+                    tabBarStyle: { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' },
                 }}
-            />
-            <Tabs.Screen
-                name="schedule"
-                options={{
-                    title: 'Schedule',
-                    tabBarIcon: ({ color }) => (
-                        <FontAwesome size={28} name="calendar" color={color} />
-                    ),
-                }}
-            />
-        </Tabs>
-    </ConnectionProvider>
+            >
+                <Tabs.Screen
+                    name="timer"
+                    options={{
+                        title: 'Timer',
+                        tabBarIcon: ({ color }) => (
+                            <FontAwesome size={28} name="clock-o" color={color} />
+                        ),
+                    }}
+                />
+                <Tabs.Screen
+                    name="schedule"
+                    options={{
+                        title: 'Schedule',
+                        tabBarIcon: ({ color }) => (
+                            <FontAwesome size={28} name="calendar" color={color} />
+                        ),
+                    }}
+                />
+            </Tabs>
+        </ConnectionProvider>
     );
 }

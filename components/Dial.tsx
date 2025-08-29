@@ -38,14 +38,11 @@ export default function Dial({
     strokeColor: string;
     onProgressChange: (progress: string) => void;
 }) {
-
-    const { state } = useConnection();
+    const { state, isConnected } = useConnection();
 
     const colorScheme = useColorScheme();
 
-    const ANGLES_DEGREES: number[] = [
-        0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34,
-    ];
+    const ANGLES_DEGREES: number[] = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30];
 
     const progress = useSharedValue(0);
     const translationX = useSharedValue(
@@ -163,17 +160,19 @@ export default function Dial({
                     elevation: 200,
                 }}
             >
-                {state && <MaterialIcons
-                    name="fiber-manual-record"
-                    size={30}
-                    color={state === 'on' ? 'green' : 'red'}
-                    style={{
-                        textShadowColor: state === 'on' ? '#00ff00' : '#ff0000',
-                        textShadowOffset: { width: 0, height: 0 },
-                        textShadowRadius: 10,
-                        margin: 5,
-                    }}
-                />}
+                {state && isConnected && (
+                    <MaterialIcons
+                        name="fiber-manual-record"
+                        size={30}
+                        color={state === 'on' ? 'green' : 'red'}
+                        style={{
+                            textShadowColor: state === 'on' ? '#00ff00' : '#ff0000',
+                            textShadowOffset: { width: 0, height: 0 },
+                            textShadowRadius: 10,
+                            margin: 5,
+                        }}
+                    />
+                )}
                 <ReText
                     style={{
                         ...styles.animatedButtonTextStyle,

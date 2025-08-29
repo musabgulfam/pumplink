@@ -15,13 +15,28 @@ export function Button({
                 styles.buttonStyle,
                 {
                     backgroundColor: title === 'Logout' ? '#555' : '#FF8A00',
-                    shadowColor: title === 'Logout' ? '#444' : '#FF8A00',
+                    shadowColor:
+                        title === 'Logout' || viewStyle?.backgroundColor === '#555'
+                            ? '#444'
+                            : !viewStyle?.backgroundColor
+                              ? undefined
+                              : '#FF8A00',
                 },
                 viewStyle,
             ]}
             onPress={onPress}
         >
-            <Text style={styles.buttonTextStyle}>{title}</Text>
+            <Text
+                style={[
+                    styles.buttonTextStyle,
+                    {
+                        fontWeight:
+                            title === 'Select Date' || title === 'Select Time' ? 'normal' : 'bold',
+                    },
+                ]}
+            >
+                {title}
+            </Text>
         </TouchableOpacity>
     );
 }

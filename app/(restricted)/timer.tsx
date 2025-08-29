@@ -72,61 +72,76 @@ export default function Timer() {
 
     return (
         <View style={{ flex: 1, backgroundColor: colorScheme === 'dark' ? 'black' : 'white' }}>
-            {loading ? (
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <ActivityIndicator size="large" color="#FF8A00" />
-                </View>
-            ) : (
-                <>
-                    <Dial
-                        strokeColor={'#FF8A00'}
-                        onProgressChange={(progress) => (progressText.current = progress)}
-                    />
-                    <View style={styles.buttonContainer}>
-                        <Button
-                            title="GO"
-                            onPress={async () => {
-                                const token = await SecureStore.getItemAsync('authToken');
-                                if (!token) {
-                                    return;
-                                }
-                                const duration = parseInt(progressText.current.split(' ')[0]);
-                                try {
-                                    // Activate device
-                                    await api
-                                        .post(
-                                            '/activate',
-                                            {
-                                                device_id: 1,
-                                                duration,
-                                            },
-                                            { headers: { Authorization: `Bearer ${token}` } },
-                                        )
-                                        .catch((error) => {
-                                            Alert.alert('Error', error.message);
-                                        });
-                                } catch (error: any) {
-                                    if (error?.response?.status === 401) {
-                                        await SecureStore.deleteItemAsync('authToken');
-                                        router.replace('/(auth)/login');
-                                    } else {
-                                        console.error(error);
-                                    }
-                                }
-                            }}
-                            viewStyle={{ width: '40%', padding: 20 }}
-                        />
-                        <Button
-                            title="Logout"
-                            onPress={async () => {
-                                await SecureStore.deleteItemAsync('authToken');
-                                router.replace('/(auth)/login');
-                            }}
-                            viewStyle={{ width: '40%', padding: 20 }}
-                        />
+            <Dial
+                strokeColor={'#FF8A00'}
+                onProgressChange={(progress) => (progressText.current = progress)}
+            />
+            <View style={styles.buttonContainer}>
+                {loading ? (
+                    <View
+                        style={{
+                            width: '40%',
+                            padding: 20,
+                        }}
+                    >
+                        <ActivityIndicator />
                     </View>
-                </>
-            )}
+                ) : (
+                    <Button
+                        title="GO"
+                        onPress={async () => {
+                            const token = await SecureStore.getItemAsync('authToken');
+                            if (!token) {
+                                return;
+                            }
+                            setLoading(true);
+                            const duration = parseInt(progressText.current.split(' ')[0]);
+                            try {
+                                // Activate device
+                                await api
+                                    .post(
+                                        '/activate',
+                                        {
+                                            device_id: 1,
+                                            duration,
+                                        },
+                                        { headers: { Authorization: `Bearer ${token}` } },
+                                    )
+                                    .then(() => {
+                                        Alert.alert('Success', 'Device activated successfully');
+                                    })
+                                    .catch(async (error) => {
+                                        if (error?.response?.status === 401) {
+                                            await SecureStore.deleteItemAsync('authToken');
+                                            router.replace('/(auth)/login');
+                                        } else {
+                                            console.error(error);
+                                        }
+                                    })
+                                    .finally(() => {
+                                        setLoading(false);
+                                    });
+                            } catch (error: any) {
+                                if (error?.response?.status === 401) {
+                                    await SecureStore.deleteItemAsync('authToken');
+                                    router.replace('/(auth)/login');
+                                } else {
+                                    console.error(error);
+                                }
+                            }
+                        }}
+                        viewStyle={{ width: '40%', padding: 20 }}
+                    />
+                )}
+                <Button
+                    title="Logout"
+                    onPress={async () => {
+                        await SecureStore.deleteItemAsync('authToken');
+                        router.replace('/(auth)/login');
+                    }}
+                    viewStyle={{ width: '40%', padding: 20 }}
+                />
+            </View>
         </View>
     );
 }
