@@ -1,3 +1,4 @@
+import { useConnection } from '@/providers';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Dimensions, StyleSheet, useColorScheme, View } from 'react-native';
@@ -27,18 +28,21 @@ const CENTER_X = width / 2;
 
 const CENTER_Y = height / 2;
 
+// Adjust the AnimatedCircle definition to ensure compatibility with animatedProps
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+
 export default function Dial({
-    state,
+    strokeColor,
     onProgressChange,
 }: {
-    state: 'on' | 'off';
+    strokeColor: string;
     onProgressChange: (progress: string) => void;
 }) {
+    const { state, isConnected } = useConnection();
+
     const colorScheme = useColorScheme();
 
-    const ANGLES_DEGREES: number[] = [
-        0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34,
-    ];
+    const ANGLES_DEGREES: number[] = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30];
 
     const progress = useSharedValue(0);
     const translationX = useSharedValue(
@@ -55,12 +59,23 @@ export default function Dial({
     );
     const prevTriggerredAngle = useSharedValue(0);
 
+    // Replace direct access to shared values with derived values
+    const derivedTranslationX = useDerivedValue(() => translationX.value);
+    const derivedTranslationY = useDerivedValue(() => translationY.value);
+    const derivedProgress = useDerivedValue(() => progress.value);
+    const derivedPrevTriggerredAngle = useDerivedValue(() => prevTriggerredAngle.value);
+
+    // Update animated styles and logic to use derived values
     const animatedStyles = useAnimatedStyle(() => ({
-        transform: [{ translateX: translationX.value }, { translateY: translationY.value }],
+        transform: [
+            { translateX: derivedTranslationX.value },
+            { translateY: derivedTranslationY.value },
+        ],
     }));
 
+    // Update progressText to use derivedProgress
     const progressText = useDerivedValue(() => {
-        let _progress = Math.floor(progress.value);
+        let _progress = Math.floor(derivedProgress.value);
         const text = `${(_progress / 10).toFixed(0)} ${Math.floor(_progress / 10) < 2 ? 'minute' : 'minutes'}`;
         runOnJS(onProgressChange)(text);
         return text;
@@ -77,27 +92,22 @@ export default function Dial({
         .maxPointers(1)
         .shouldCancelWhenOutside(true)
         .onStart(() => {
-            prevTranslationX.value = translationX.value;
-            prevTranslationY.value = translationY.value;
+            prevTranslationX.value = derivedTranslationX.value;
+            prevTranslationY.value = derivedTranslationY.value;
         })
         .onUpdate((event) => {
-            // Calculate new angle based on user movement
             const deltaX = event.translationX + prevTranslationX.value - CENTER_X;
             const deltaY = event.translationY + prevTranslationY.value - CENTER_Y;
 
-            let angle = Math.atan2(deltaY, deltaX); // Calculate angle in radians
+            let angle = Math.atan2(deltaY, deltaX);
+            let angleDeg = ((angle * 180) / Math.PI + 90 + 360) % 360;
 
-            // Adjust angle by +90 degrees to make 0° start from the top of the dial
-            let angleDeg = ((angle * 180) / Math.PI + 90 + 360) % 360; // Normalize and adjust for top
-
-            // Ensure angle is always positive (0° to 302°)
             if (angleDeg > 300) return;
 
             progress.value = angleDeg;
 
-            // Haptic/vibration feedback upon knob rotation of 20 degrees
-            if (Math.abs(angleDeg - prevTriggerredAngle.value) >= 20) {
-                runOnJS(triggerHaptic)(); // Ensure it's executed on the JS thread
+            if (Math.abs(angleDeg - derivedPrevTriggerredAngle.value) >= 20) {
+                runOnJS(triggerHaptic)();
                 prevTriggerredAngle.value = angleDeg;
             }
 
@@ -108,11 +118,16 @@ export default function Dial({
             translationY.value = newY - 25;
         });
 
-    const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+    // Use a shared value to store the stroke offset and derive animatedProps from it
+    const strokeOffset = useSharedValue(CIRCLE_LENGTH);
 
-    const animatedProps = useAnimatedProps(() => ({
-        strokeDashoffset: CIRCLE_LENGTH * (1 - progress.value / 360),
-    }));
+    // Replace direct access to shared values in render phase
+    const derivedStrokeDasharray = useDerivedValue(() => strokeOffset.value);
+
+    // Update the strokeOffset shared value whenever progress changes
+    useDerivedValue(() => {
+        strokeOffset.value = CIRCLE_LENGTH * (1 - progress.value / 360);
+    });
 
     const waterLevel = useDerivedValue(() => Math.max(1, progress.value), [progress]);
 
@@ -145,17 +160,19 @@ export default function Dial({
                     elevation: 200,
                 }}
             >
-                <MaterialIcons
-                    name="fiber-manual-record"
-                    size={30}
-                    color={state === 'on' ? 'green' : 'red'}
-                    style={{
-                        textShadowColor: state === 'on' ? '#00ff00' : '#ff0000',
-                        textShadowOffset: { width: 0, height: 0 },
-                        textShadowRadius: 10,
-                        margin: 5,
-                    }}
-                />
+                {state && isConnected && (
+                    <MaterialIcons
+                        name="fiber-manual-record"
+                        size={30}
+                        color={state === 'on' ? 'green' : 'red'}
+                        style={{
+                            textShadowColor: state === 'on' ? '#00ff00' : '#ff0000',
+                            textShadowOffset: { width: 0, height: 0 },
+                            textShadowRadius: 10,
+                            margin: 5,
+                        }}
+                    />
+                )}
                 <ReText
                     style={{
                         ...styles.animatedButtonTextStyle,
@@ -170,14 +187,16 @@ export default function Dial({
                     <AnimatedCircle
                         cx={CENTER_X}
                         cy={CENTER_Y}
-                        stroke={'#FF8A00'}
+                        stroke={strokeColor}
                         strokeWidth={50}
                         r={RADIUS}
                         fill={'none'}
                         strokeDasharray={CIRCLE_LENGTH}
                         strokeLinecap={'round'}
                         transform={`rotate(271, ${CENTER_X}, ${CENTER_Y})`}
-                        animatedProps={animatedProps}
+                        animatedProps={useAnimatedProps(() => ({
+                            strokeDashoffset: derivedStrokeDasharray.value,
+                        }))}
                     />
                     <Ball animatedStyles={animatedStyles} colorScheme={colorScheme ?? 'white'} />
                     <Defs>
