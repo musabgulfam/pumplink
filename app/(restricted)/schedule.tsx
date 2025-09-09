@@ -93,50 +93,58 @@ const ScheduleScreen = () => {
 
     return (
         <View style={{ flex: 1, backgroundColor: colorScheme === 'dark' ? 'black' : 'white' }}>
-            <View style={{
-                flex: 1
-            }}>
-                <SafeAreaView
+            <View
                 style={{
-                    padding: 20,
+                    flex: 1,
                 }}
             >
-                <Text
+                <SafeAreaView
                     style={{
-                        color: colorScheme === 'dark' ? 'white' : 'black',
-                        marginBottom: 10,
-                        fontSize: 18,
+                        padding: 20,
                     }}
                 >
-                    Selected Date:{' '}
-                    <Text style={{ color: '#FF8A00', fontWeight: 'bold' }}>
-                        {date.toDateString()}
+                    <Text
+                        style={{
+                            color: colorScheme === 'dark' ? 'white' : 'black',
+                            marginBottom: 10,
+                            fontSize: 18,
+                        }}
+                    >
+                        Selected Date:{' '}
+                        <Text style={{ color: '#FF8A00', fontWeight: 'bold' }}>
+                            {date.toDateString()}
+                        </Text>
                     </Text>
-                </Text>
-                <Text
+                    <Text
+                        style={{
+                            color: colorScheme === 'dark' ? 'white' : 'black',
+                            fontSize: 18,
+                        }}
+                    >
+                        Selected Time:{' '}
+                        <Text style={{ color: '#FF8A00', fontWeight: 'bold' }}>
+                            {time.toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: true,
+                            })}
+                        </Text>
+                    </Text>
+                </SafeAreaView>
+                <View
                     style={{
-                        color: colorScheme === 'dark' ? 'white' : 'black',
-                        fontSize: 18,
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
                     }}
                 >
-                    Selected Time:{' '}
-                    <Text style={{ color: '#FF8A00', fontWeight: 'bold' }}>
-                        {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
-                    </Text>
-                </Text>
-            </SafeAreaView>
-            <View style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0
-            }}>
-                <Dial
-                strokeColor={'#555'}
-                onProgressChange={(progress) => (progressText.current = progress)}
-                />
-            </View>
+                    <Dial
+                        strokeColor={'#555'}
+                        onProgressChange={(progress) => (progressText.current = progress)}
+                    />
+                </View>
             </View>
             <View style={{ paddingBottom: 20 }}>
                 <View>
@@ -156,7 +164,7 @@ const ScheduleScreen = () => {
                                 backgroundColor: undefined,
                                 borderWidth: 1,
                                 borderColor: colorScheme === 'dark' ? 'white' : 'black',
-                                paddingHorizontal: 0
+                                paddingHorizontal: 0,
                             }}
                         />
                         <Button
@@ -168,7 +176,7 @@ const ScheduleScreen = () => {
                                 backgroundColor: undefined,
                                 borderWidth: 1,
                                 borderColor: colorScheme === 'dark' ? 'white' : 'black',
-                                paddingHorizontal: 0
+                                paddingHorizontal: 0,
                             }}
                         />
                     </View>

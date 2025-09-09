@@ -1,10 +1,54 @@
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { api } from '@/api';
+import { AxiosError } from 'axios';
+import * as SecureStore from 'expo-secure-store';
+import React, { useCallback, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
 export default function AdminScreen() {
+    const colorScheme = useColorScheme();
+    const [disabled, setDisabled] = useState(false);
+    const handleForceOff = useCallback(async () => {
+        const token = await SecureStore.getItemAsync('authToken');
+        api.post(
+            'device/1/force-shutdown',
+            {},
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            },
+        )
+            .then((data) => {
+                console.log('Success:', data);
+            })
+            .catch((error: unknown) => {
+                if (
+                    error instanceof AxiosError &&
+                    error.response &&
+                    error.response.data &&
+                    error.response.data.error
+                ) {
+                    const status = error.response.status;
+                    if (status === 403) {
+                        setDisabled(true);
+                    }
+                }
+                console.error('Error:', error);
+            });
+    }, []);
     return (
-        <View style={styles.container}>
-            <TouchableOpacity style={styles.bigButton}>
+        <View
+            style={[
+                styles.container,
+                { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' },
+            ]}
+        >
+            <TouchableOpacity
+                style={[styles.bigButton, { backgroundColor: disabled ? '#555' : '#FF8A00' }]}
+                onPress={handleForceOff}
+                disabled={disabled}
+            >
                 <Text style={styles.buttonText}>OFF</Text>
             </TouchableOpacity>
         </View>

@@ -72,12 +72,14 @@ export default function Timer() {
 
     return (
         <View style={{ flex: 1, backgroundColor: colorScheme === 'dark' ? 'black' : 'white' }}>
-            <View style={{
-                flex: 1
-            }}>
+            <View
+                style={{
+                    flex: 1,
+                }}
+            >
                 <Dial
-                strokeColor={'#FF8A00'}
-                onProgressChange={(progress) => (progressText.current = progress)}
+                    strokeColor={'#FF8A00'}
+                    onProgressChange={(progress) => (progressText.current = progress)}
                 />
             </View>
             <View style={styles.buttonContainer}>
@@ -156,7 +158,7 @@ const styles = StyleSheet.create({
         alignItems: 'flex-end',
         paddingBottom: 20,
         flexDirection: 'row',
-        alignContent: 'flex-end'
+        alignContent: 'flex-end',
     },
 });
 
