@@ -18,7 +18,7 @@ export default function Timer() {
     const sendPushTokenToBackend = useCallback(
         async (expoPushToken: string) => {
             try {
-                const token = await SecureStore.getItemAsync('authToken');
+                const token = await SecureStore.getItemAsync('accessToken');
                 if (!token) return;
                 await api.post(
                     '/register-push-token',
@@ -28,7 +28,7 @@ export default function Timer() {
                 console.log('Push token registered successfully');
             } catch (error) {
                 console.error('Failed to register push token:', error);
-                await SecureStore.deleteItemAsync('authToken');
+                await SecureStore.deleteItemAsync('accessToken');
                 router.replace('/(auth)/login');
             }
         },
@@ -44,7 +44,7 @@ export default function Timer() {
                 await sendPushTokenToBackend(token);
             } catch (error: any) {
                 if (error?.response?.status === 401) {
-                    await SecureStore.deleteItemAsync('authToken');
+                    await SecureStore.deleteItemAsync('accessToken');
                     router.replace('/(auth)/login');
                 } else {
                     console.error(error);
@@ -96,7 +96,7 @@ export default function Timer() {
                     <Button
                         title="GO"
                         onPress={async () => {
-                            const token = await SecureStore.getItemAsync('authToken');
+                            const token = await SecureStore.getItemAsync('accessToken');
                             if (!token) {
                                 return;
                             }
@@ -118,7 +118,7 @@ export default function Timer() {
                                     })
                                     .catch(async (error) => {
                                         if (error?.response?.status === 401) {
-                                            await SecureStore.deleteItemAsync('authToken');
+                                            await SecureStore.deleteItemAsync('accessToken');
                                             router.replace('/(auth)/login');
                                         } else {
                                             console.error(error);
@@ -129,7 +129,7 @@ export default function Timer() {
                                     });
                             } catch (error: any) {
                                 if (error?.response?.status === 401) {
-                                    await SecureStore.deleteItemAsync('authToken');
+                                    await SecureStore.deleteItemAsync('accessToken');
                                     router.replace('/(auth)/login');
                                 } else {
                                     console.error(error);
@@ -142,7 +142,7 @@ export default function Timer() {
                 <Button
                     title="Logout"
                     onPress={async () => {
-                        await SecureStore.deleteItemAsync('authToken');
+                        await SecureStore.deleteItemAsync('accessToken');
                         router.replace('/(auth)/login');
                     }}
                     viewStyle={{ width: '40%', padding: 20 }}

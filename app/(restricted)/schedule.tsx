@@ -36,7 +36,7 @@ const ScheduleScreen = () => {
         setLoading(true);
 
         try {
-            const token = await SecureStore.getItemAsync('authToken');
+            const token = await SecureStore.getItemAsync('accessToken');
             console.log('dateTime:', dateTime);
             console.log('duration:', parseInt(progressText.current));
             const response = await api.post(

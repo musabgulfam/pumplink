@@ -30,7 +30,7 @@ export default function Index() {
         });
 
         (async () => {
-            const token = await SecureStore.getItemAsync('authToken');
+            const token = await SecureStore.getItemAsync('accessToken');
             if (token) {
                 router.replace('/(restricted)/timer');
             } else {

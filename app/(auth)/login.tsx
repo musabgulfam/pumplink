@@ -1,9 +1,10 @@
 import { api } from '@/api';
 import { Button } from '@/components';
 import { AxiosResponse } from 'axios';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -20,6 +21,41 @@ export default function Login() {
     const router = useRouter();
     const colorScheme = useColorScheme();
     const [loading, setLoading] = useState(false);
+    const [showForm, setShowForm] = useState(true);
+
+    // Try biometric + silent refresh on mount
+    useEffect(() => {
+        const tryBiometricRefresh = async () => {
+            setLoading(true);
+            try {
+                const storedRefreshToken = await SecureStore.getItemAsync('refreshToken');
+                if (!storedRefreshToken) {
+                    setShowForm(true);
+                    setLoading(false);
+                    return;
+                }
+                // Prompt for biometrics
+                const biometricResult = await LocalAuthentication.authenticateAsync({
+                    promptMessage: 'Verify your identity to continue',
+                });
+                if (!biometricResult.success) {
+                    setShowForm(true);
+                    setLoading(false);
+                    return;
+                }
+                // Attempt refresh
+                const response = await api.post('/refresh-token', { refresh_token: storedRefreshToken });
+                await SecureStore.setItemAsync('accessToken', response.data.access_token);
+                router.replace('/(restricted)/timer');
+            } catch (err) {
+                setShowForm(true);
+            } finally {
+                setLoading(false);
+            }
+        };
+        tryBiometricRefresh();
+    }, [router]);
+
     return (
         <View
             style={[
@@ -30,94 +66,86 @@ export default function Login() {
             ]}
         >
             <Text style={styles.title}>Welcome Back 👋</Text>
-            <TextInput
-                style={[styles.input, { color: colorScheme === 'dark' ? 'white' : 'black' }]}
-                placeholder="Email"
-                placeholderTextColor="#aaa"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="off"
-            />
-            <TextInput
-                style={[styles.input, { color: colorScheme === 'dark' ? 'white' : 'black' }]}
-                placeholder="Password"
-                placeholderTextColor="#aaa"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="off"
-            />
-            <View
-                style={{
-                    alignItems: 'center',
-                }}
-            >
-                <Text style={styles.link}>
-                    Don't have an account yet?{' '}
-                    <Text
-                        onPress={() => router.push('/register')}
-                        style={{
-                            textDecorationLine: 'underline',
-                            color: '#555',
-                        }}
-                    >
-                        Register
-                    </Text>
-                </Text>
-            </View>
-            <View
-                style={{
-                    marginTop: 20,
-                    alignItems: 'center',
-                }}
-            >
-                {loading ? (
-                    <ActivityIndicator />
-                ) : (
-                    <Button
-                        title="Login"
-                        onPress={() => {
-                            setLoading(true);
-                            // Normally you’d validate credentials with an API
-                            api.post('/login', { email, password })
-                                .then(
-                                    (
-                                        response: AxiosResponse<{
-                                            message: string;
-                                            token: string;
-                                            user: {
-                                                created_at: string;
-                                                email: string;
-                                                id: string;
-                                                updated_at: string;
-                                            };
-                                        }>,
-                                    ) => {
-                                        // Handle successful login
-                                        SecureStore.setItemAsync('authToken', response.data.token);
-                                        router.replace('/(restricted)/timer');
-                                    },
-                                )
-                                .catch((error) => {
-                                    // Handle login error
-                                    let message = 'Login failed. Please try again.';
-                                    if (error?.response?.data?.error) {
-                                        message = error.response.data.error;
-                                    }
-                                    Alert.alert('Login Error', message);
-                                    console.error(error);
-                                })
-                                .finally(() => {
-                                    setLoading(false);
-                                });
-                        }}
+            {showForm && (
+                <>
+                    <TextInput
+                        style={[styles.input, { color: colorScheme === 'dark' ? 'white' : 'black' }]}
+                        placeholder="Email"
+                        placeholderTextColor="#aaa"
+                        value={email}
+                        onChangeText={setEmail}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="off"
                     />
-                )}
-            </View>
+                    <TextInput
+                        style={[styles.input, { color: colorScheme === 'dark' ? 'white' : 'black' }]}
+                        placeholder="Password"
+                        placeholderTextColor="#aaa"
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="off"
+                    />
+                    <View style={{ alignItems: 'center' }}>
+                        <Text style={styles.link}>
+                            Don't have an account yet?{' '}
+                            <Text
+                                onPress={() => router.push('/register')}
+                                style={{ textDecorationLine: 'underline', color: '#555' }}
+                            >
+                                Register
+                            </Text>
+                        </Text>
+                    </View>
+                    <View style={{ marginTop: 20, alignItems: 'center' }}>
+                        {loading ? (
+                            <ActivityIndicator />
+                        ) : (
+                            <Button
+                                title="Login"
+                                onPress={() => {
+                                    setLoading(true);
+                                    api.post('/login', { email, password })
+                                        .then(
+                                            async (
+                                                response: AxiosResponse<{
+                                                    message: string;
+                                                    token: string;
+                                                    refreshToken: string;
+                                                    user: {
+                                                        created_at: string;
+                                                        email: string;
+                                                        id: string;
+                                                        updated_at: string;
+                                                    };
+                                                }>,
+                                            ) => {
+                                                await SecureStore.setItemAsync('accessToken', response.data.token);
+                                                await SecureStore.setItemAsync('refreshToken', response.data.refreshToken);
+                                                router.replace('/(restricted)/timer');
+                                            },
+                                        )
+                                        .catch((error) => {
+                                            let message = 'Login failed. Please try again.';
+                                            if (error?.response?.data?.error) {
+                                                message = error.response.data.error;
+                                            }
+                                            Alert.alert('Login Error', message);
+                                            console.error(error);
+                                        })
+                                        .finally(() => {
+                                            setLoading(false);
+                                        });
+                                }}
+                            />
+                        )}
+                    </View>
+                </>
+            )}
+            {!showForm && loading && <ActivityIndicator />}
         </View>
     );
 }

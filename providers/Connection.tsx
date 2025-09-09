@@ -22,7 +22,7 @@ export const ConnectionProvider = ({ children }: { children: React.ReactNode }) 
 
     useEffect(() => {
         const setupWebSocket = async () => {
-            const token = await SecureStore.getItemAsync('authToken');
+            const token = await SecureStore.getItemAsync('accessToken');
             if (!token) {
                 router.replace('/(auth)/login');
                 return;
@@ -51,7 +51,7 @@ export const ConnectionProvider = ({ children }: { children: React.ReactNode }) 
                 setIsConnected(false);
 
                 if (msg.code === 1008) {
-                    SecureStore.deleteItemAsync('authToken');
+                    SecureStore.deleteItemAsync('accessToken');
                     router.replace('/(auth)/login');
                 }
             };

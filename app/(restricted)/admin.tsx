@@ -10,7 +10,7 @@ export default function AdminScreen() {
     // TODO: Replace with dynamic device selection logic as needed
     const deviceId = 1;
     const handleForceOff = useCallback(async () => {
-        const token = await SecureStore.getItemAsync('authToken');
+        const token = await SecureStore.getItemAsync('accessToken');
         api.post(
             `device/${deviceId}/force-shutdown`,
             {},
