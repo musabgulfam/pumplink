@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
         width: 220,
         height: 220,
         borderRadius: 110,
-        backgroundColor: '#FF8A00',
+        // backgroundColor removed; set dynamically in component
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 8,
