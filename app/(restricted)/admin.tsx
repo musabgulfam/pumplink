@@ -7,10 +7,12 @@ import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-
 export default function AdminScreen() {
     const colorScheme = useColorScheme();
     const [disabled, setDisabled] = useState(false);
+    // TODO: Replace with dynamic device selection logic as needed
+    const deviceId = 1;
     const handleForceOff = useCallback(async () => {
         const token = await SecureStore.getItemAsync('authToken');
         api.post(
-            'device/1/force-shutdown',
+            `device/${deviceId}/force-shutdown`,
             {},
             {
                 headers: {
