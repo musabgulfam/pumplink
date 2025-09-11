@@ -1,23 +1,26 @@
 import { api } from '@/api';
 import { Button } from '@/components';
+import { FontAwesome } from '@expo/vector-icons';
 import { AxiosResponse } from 'axios';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
     StyleSheet,
     Text,
     TextInput,
+    TouchableOpacity,
     useColorScheme,
-    View,
+    View
 } from 'react-native';
 
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [visible, setVisible] = useState(false);
     const router = useRouter();
     const colorScheme = useColorScheme();
     const [loading, setLoading] = useState(false);
@@ -66,86 +69,100 @@ export default function Login() {
             ]}
         >
             <Text style={styles.title}>Welcome Back 👋</Text>
-            {showForm && (
-                <>
-                    <TextInput
-                        style={[styles.input, { color: colorScheme === 'dark' ? 'white' : 'black' }]}
-                        placeholder="Email"
-                        placeholderTextColor="#aaa"
-                        value={email}
-                        onChangeText={setEmail}
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        autoComplete="off"
+            <TextInput
+                style={[styles.input, { color: colorScheme === 'dark' ? 'white' : 'black' }]}
+                placeholder="Email"
+                placeholderTextColor="#aaa"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="off"
+            />
+            <View style={styles.passwordContainer}>
+                <TextInput
+                    style={{ flex: 1, color: colorScheme === 'dark' ? 'white' : 'black' }}
+                    placeholder="Password"
+                    placeholderTextColor="#aaa"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!visible}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="off"
+                />
+                <TouchableOpacity onPress={() => setVisible((v) => !v)}>
+                    <FontAwesome name={visible ? 'eye' : 'eye-slash'} size={24} color="#888" />
+                </TouchableOpacity>
+            </View>
+            <View
+                style={{
+                    alignItems: 'center',
+                }}
+            >
+                <Text style={styles.link}>
+                    Don't have an account yet?{' '}
+                    <Text
+                        onPress={() => router.push('/register')}
+                        style={{
+                            textDecorationLine: 'underline',
+                            color: '#555',
+                        }}
+                    >
+                        Register
+                    </Text>
+                </Text>
+            </View>
+            <View
+                style={{
+                    marginTop: 20,
+                    alignItems: 'center',
+                }}
+            >
+                {loading ? (
+                    <ActivityIndicator />
+                ) : (
+                    <Button
+                        title="Login"
+                        onPress={() => {
+                            setLoading(true);
+                            // Normally you’d validate credentials with an API
+                            api.post('/login', { email, password })
+                                .then(
+                                    (
+                                        response: AxiosResponse<{
+                                            message: string;
+                                            token: string;
+                                            user: {
+                                                created_at: string;
+                                                email: string;
+                                                id: string;
+                                                updated_at: string;
+                                            };
+                                        }>,
+                                    ) => {
+                                        // Handle successful login
+                                        SecureStore.setItemAsync('authToken', response.data.token);
+                                        router.replace('/(restricted)/timer');
+                                    },
+                                )
+                                .catch((error) => {
+                                    // Handle login error
+                                    let message = 'Login failed. Please try again.';
+                                    if (error?.response?.data?.error) {
+                                        message = error.response.data.error;
+                                    }
+                                    Alert.alert('Login Error', message);
+                                    console.error(error);
+                                })
+                                .finally(() => {
+                                    setLoading(false);
+                                });
+                        }}
                     />
-                    <TextInput
-                        style={[styles.input, { color: colorScheme === 'dark' ? 'white' : 'black' }]}
-                        placeholder="Password"
-                        placeholderTextColor="#aaa"
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        autoComplete="off"
-                    />
-                    <View style={{ alignItems: 'center' }}>
-                        <Text style={styles.link}>
-                            Don't have an account yet?{' '}
-                            <Text
-                                onPress={() => router.push('/register')}
-                                style={{ textDecorationLine: 'underline', color: '#555' }}
-                            >
-                                Register
-                            </Text>
-                        </Text>
-                    </View>
-                    <View style={{ marginTop: 20, alignItems: 'center' }}>
-                        {loading ? (
-                            <ActivityIndicator />
-                        ) : (
-                            <Button
-                                title="Login"
-                                onPress={() => {
-                                    setLoading(true);
-                                    api.post('/login', { email, password })
-                                        .then(
-                                            async (
-                                                response: AxiosResponse<{
-                                                    message: string;
-                                                    token: string;
-                                                    refreshToken: string;
-                                                    user: {
-                                                        created_at: string;
-                                                        email: string;
-                                                        id: string;
-                                                        updated_at: string;
-                                                    };
-                                                }>,
-                                            ) => {
-                                                await SecureStore.setItemAsync('accessToken', response.data.token);
-                                                await SecureStore.setItemAsync('refreshToken', response.data.refreshToken);
-                                                router.replace('/(restricted)/timer');
-                                            },
-                                        )
-                                        .catch((error) => {
-                                            let message = 'Login failed. Please try again.';
-                                            if (error?.response?.data?.error) {
-                                                message = error.response.data.error;
-                                            }
-                                            Alert.alert('Login Error', message);
-                                            console.error(error);
-                                        })
-                                        .finally(() => {
-                                            setLoading(false);
-                                        });
-                                }}
-                            />
-                        )}
-                    </View>
-                </>
-            )}
+                )}
             {!showForm && loading && <ActivityIndicator />}
+        </View>
         </View>
     );
 }
@@ -166,6 +183,17 @@ const styles = StyleSheet.create({
         padding: 14,
         borderRadius: 12,
         marginBottom: 15,
+        borderWidth: 1,
+        borderColor: '#aaa',
+        color: '#aaa',
+    },
+    passwordContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 15,
+        paddingHorizontal: 14,
+        paddingVertical: 5,
+        borderRadius: 12,
         borderWidth: 1,
         borderColor: '#aaa',
         color: '#aaa',

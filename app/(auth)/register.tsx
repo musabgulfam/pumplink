@@ -1,5 +1,6 @@
 import { api } from '@/api';
 import { Button } from '@/components';
+import { FontAwesome } from '@expo/vector-icons';
 import { AxiosResponse } from 'axios';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -9,6 +10,7 @@ import {
     StyleSheet,
     Text,
     TextInput,
+    TouchableOpacity,
     useColorScheme,
     View,
 } from 'react-native';
@@ -19,7 +21,7 @@ export default function Register() {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const colorScheme = useColorScheme();
-
+    const [visible, setVisible] = useState(false);
     return (
         <View
             style={[
@@ -42,17 +44,22 @@ export default function Register() {
                 autoComplete="off"
             />
 
-            <TextInput
-                style={[styles.input, { color: colorScheme === 'dark' ? 'white' : 'black' }]}
-                placeholder="Password"
-                placeholderTextColor="#aaa"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="off"
-            />
+            <View style={styles.passwordContainer}>
+                <TextInput
+                    style={{ flex: 1, color: colorScheme === 'dark' ? 'white' : 'black' }}
+                    placeholder="Password"
+                    placeholderTextColor="#aaa"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!visible}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="off"
+                />
+                <TouchableOpacity onPress={() => setVisible((v) => !v)}>
+                    <FontAwesome name={visible ? 'eye' : 'eye-slash'} size={24} color="#888" />
+                </TouchableOpacity>
+            </View>
 
             <View
                 style={{
@@ -153,5 +160,16 @@ const styles = StyleSheet.create({
         marginTop: 15,
         color: '#555',
         fontWeight: '600',
+    },
+    passwordContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 15,
+        paddingHorizontal: 14,
+        paddingVertical: 5,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#aaa',
+        color: '#aaa',
     },
 });
