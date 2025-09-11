@@ -14,7 +14,7 @@ import {
     TextInput,
     TouchableOpacity,
     useColorScheme,
-    View
+    View,
 } from 'react-native';
 
 export default function Login() {
@@ -47,7 +47,9 @@ export default function Login() {
                     return;
                 }
                 // Attempt refresh
-                const response = await api.post('/refresh-token', { refresh_token: storedRefreshToken });
+                const response = await api.post('/refresh-token', {
+                    refresh_token: storedRefreshToken,
+                });
                 await SecureStore.setItemAsync('accessToken', response.data.access_token);
                 router.replace('/(restricted)/timer');
             } catch (err) {
@@ -161,8 +163,8 @@ export default function Login() {
                         }}
                     />
                 )}
-            {!showForm && loading && <ActivityIndicator />}
-        </View>
+                {!showForm && loading && <ActivityIndicator />}
+            </View>
         </View>
     );
 }
