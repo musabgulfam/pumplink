@@ -39,7 +39,7 @@ const ScheduleScreen = () => {
             const token = await SecureStore.getItemAsync('accessToken');
             console.log('dateTime:', dateTime);
             console.log('duration:', parseInt(progressText.current));
-            const response = await api.post(
+            await api.post(
                 '/schedule',
                 {
                     device_id: 1,
@@ -52,9 +52,17 @@ const ScheduleScreen = () => {
                         'Content-Type': 'application/json',
                     },
                 },
-            );
-
-            Alert.alert('Success', response.data.status);
+            ).catch(async (error: unknown) => {
+                if (error instanceof AxiosError && error?.response?.status === 401) {
+                    await SecureStore.deleteItemAsync('accessToken');
+                    router.replace('/(auth)/login');
+                } else {
+                    console.error(error);
+                }
+            })
+            .then((res) => {
+                Alert.alert('Success', res?.data?.message || 'Device scheduled successfully');
+            })
         } catch (error: unknown) {
             if (
                 error instanceof AxiosError &&
