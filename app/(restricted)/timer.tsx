@@ -147,6 +147,7 @@ export default function Timer() {
                     title="Logout"
                     onPress={async () => {
                         await SecureStore.deleteItemAsync('accessToken');
+                        await SecureStore.deleteItemAsync('refreshToken');
                         router.replace('/(auth)/login');
                     }}
                     viewStyle={{ width: '40%', padding: 20 }}
