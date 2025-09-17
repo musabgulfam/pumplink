@@ -2,7 +2,7 @@ import { api } from '@/api';
 import { AxiosError } from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { Alert, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
 export default function AdminScreen() {
     const colorScheme = useColorScheme();
@@ -22,7 +22,7 @@ export default function AdminScreen() {
             },
         )
             .then((data) => {
-                console.log('Success:', data);
+                Alert.alert('Success', data.data.message || 'Device turned off successfully');
             })
             .catch((error: unknown) => {
                 if (
@@ -35,6 +35,7 @@ export default function AdminScreen() {
                     if (status === 403) {
                         setDisabled(true);
                     }
+                    Alert.alert('Error', error.response.data.error);
                 }
                 console.error('Error:', error);
             });
@@ -67,7 +68,6 @@ const styles = StyleSheet.create({
         width: 220,
         height: 220,
         borderRadius: 110,
-        // backgroundColor removed; set dynamically in component
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 8,

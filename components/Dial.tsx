@@ -1,7 +1,7 @@
 import { useConnection } from '@/providers';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { Dimensions, StyleSheet, useColorScheme, View } from 'react-native';
+import { ActivityIndicator, Dimensions, StyleSheet, useColorScheme, View } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
     interpolate,
@@ -170,6 +170,13 @@ export default function Dial({
                             textShadowOffset: { width: 0, height: 0 },
                             textShadowRadius: 10,
                             margin: 5,
+                        }}
+                    />
+                )}
+                {(!isConnected || !state) && (
+                    <ActivityIndicator
+                        style={{
+                            margin: 10,
                         }}
                     />
                 )}

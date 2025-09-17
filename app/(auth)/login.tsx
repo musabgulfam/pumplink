@@ -3,9 +3,9 @@ import { Button } from '@/components';
 import { FontAwesome } from '@expo/vector-icons';
 import { AxiosResponse } from 'axios';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -26,12 +26,12 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [showForm, setShowForm] = useState(true);
 
-    // Try biometric + silent refresh on mount
-    useEffect(() => {
-        const tryBiometricRefresh = async () => {
+    const biometricVerification = useCallback(() => {
+        (async () => {
             setLoading(true);
             try {
                 const storedRefreshToken = await SecureStore.getItemAsync('refreshToken');
+                console.log('Stored refresh token:', storedRefreshToken);
                 if (!storedRefreshToken) {
                     setShowForm(true);
                     setLoading(false);
@@ -41,6 +41,7 @@ export default function Login() {
                 const biometricResult = await LocalAuthentication.authenticateAsync({
                     promptMessage: 'Verify your identity to continue',
                 });
+                console.log('Biometric result:', biometricResult);
                 if (!biometricResult.success) {
                     setShowForm(true);
                     setLoading(false);
@@ -54,12 +55,20 @@ export default function Login() {
                 router.replace('/(restricted)/timer');
             } catch (err) {
                 setShowForm(true);
+                console.error(err);
+                await SecureStore.deleteItemAsync('accessToken');
+                await SecureStore.deleteItemAsync('refreshToken');
             } finally {
                 setLoading(false);
             }
-        };
-        tryBiometricRefresh();
+        })();
     }, [router]);
+
+    useFocusEffect(
+        useCallback(() => {
+            biometricVerification();
+        }, [biometricVerification]),
+    );
 
     return (
         <View
@@ -131,10 +140,11 @@ export default function Login() {
                             // Normally you’d validate credentials with an API
                             api.post('/login', { email, password })
                                 .then(
-                                    (
+                                    async (
                                         response: AxiosResponse<{
                                             message: string;
-                                            token: string;
+                                            access_token: string;
+                                            refresh_token: string;
                                             user: {
                                                 created_at: string;
                                                 email: string;
@@ -144,7 +154,14 @@ export default function Login() {
                                         }>,
                                     ) => {
                                         // Handle successful login
-                                        SecureStore.setItemAsync('authToken', response.data.token);
+                                        await SecureStore.setItemAsync(
+                                            'accessToken',
+                                            response.data.access_token,
+                                        );
+                                        await SecureStore.setItemAsync(
+                                            'refreshToken',
+                                            response.data.refresh_token,
+                                        );
                                         router.replace('/(restricted)/timer');
                                     },
                                 )
@@ -163,7 +180,6 @@ export default function Login() {
                         }}
                     />
                 )}
-                {!showForm && loading && <ActivityIndicator />}
             </View>
         </View>
     );
