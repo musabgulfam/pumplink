@@ -1,3 +1,4 @@
+import { router } from '@/.expo/types/router';
 import { api } from '@/api';
 import { AxiosError } from 'axios';
 import * as SecureStore from 'expo-secure-store';
@@ -24,7 +25,7 @@ export default function AdminScreen() {
             .then((data) => {
                 Alert.alert('Success', data.data.message || 'Device turned off successfully');
             })
-            .catch((error: unknown) => {
+            .catch(async (error: unknown) => {
                 if (
                     error instanceof AxiosError &&
                     error.response &&
@@ -34,8 +35,12 @@ export default function AdminScreen() {
                     const status = error.response.status;
                     if (status === 403) {
                         setDisabled(true);
+                        Alert.alert('Error', error.response.data.error);
                     }
-                    Alert.alert('Error', error.response.data.error);
+                    else if (status === 401) {
+                        await SecureStore.deleteItemAsync('accessToken');
+                        router.replace('/(auth)/login');
+                    }
                 }
                 console.error('Error:', error);
             });

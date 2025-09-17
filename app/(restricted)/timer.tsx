@@ -46,7 +46,6 @@ export default function Timer() {
             } catch (error: any) {
                 if (error?.response?.status === 401) {
                     await SecureStore.deleteItemAsync('accessToken');
-                    await SecureStore.deleteItemAsync('refreshToken');
                     router.replace('/(auth)/login');
                 } else {
                     console.error(error);
@@ -121,7 +120,6 @@ export default function Timer() {
                                     .catch(async (error) => {
                                         if (error?.response?.status === 401) {
                                             await SecureStore.deleteItemAsync('accessToken');
-                                            await SecureStore.deleteItemAsync('refreshToken');
                                             router.replace('/(auth)/login');
                                         } else {
                                             console.error(error);
@@ -133,7 +131,6 @@ export default function Timer() {
                             } catch (error: any) {
                                 if (error?.response?.status === 401) {
                                     await SecureStore.deleteItemAsync('accessToken');
-                                    await SecureStore.deleteItemAsync('refreshToken');
                                     router.replace('/(auth)/login');
                                 } else {
                                     console.error(error);
