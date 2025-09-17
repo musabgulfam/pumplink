@@ -35,12 +35,12 @@ export default function AdminScreen() {
                     const status = error.response.status;
                     if (status === 403) {
                         setDisabled(true);
+                        Alert.alert('Error', error.response.data.error);
                     }
                     else if (status === 401) {
                         await SecureStore.deleteItemAsync('accessToken');
                         router.replace('/(auth)/login');
                     }
-                    Alert.alert('Error', error.response.data.error);
                 }
                 console.error('Error:', error);
             });

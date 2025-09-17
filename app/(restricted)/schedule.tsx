@@ -52,16 +52,17 @@ const ScheduleScreen = () => {
                         'Content-Type': 'application/json',
                     },
                 },
-            ).catch(async (error: unknown) => {
+            )
+            .then((res) => {
+                Alert.alert('Success', res?.data?.message || 'Device scheduled successfully');
+            })
+            .catch(async (error: unknown) => {
                 if (error instanceof AxiosError && error?.response?.status === 401) {
                     await SecureStore.deleteItemAsync('accessToken');
                     router.replace('/(auth)/login');
                 } else {
                     console.error(error);
                 }
-            })
-            .then((res) => {
-                Alert.alert('Success', res?.data?.message || 'Device scheduled successfully');
             })
         } catch (error: unknown) {
             if (
