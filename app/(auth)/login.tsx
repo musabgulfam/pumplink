@@ -1,15 +1,18 @@
 import { api } from '@/api';
 import { Button } from '@/components';
+import { FontAwesome } from '@expo/vector-icons';
 import { AxiosResponse } from 'axios';
-import { useRouter } from 'expo-router';
+import * as LocalAuthentication from 'expo-local-authentication';
+import { useFocusEffect, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
     StyleSheet,
     Text,
     TextInput,
+    TouchableOpacity,
     useColorScheme,
     View,
 } from 'react-native';
@@ -17,9 +20,54 @@ import {
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [visible, setVisible] = useState(false);
     const router = useRouter();
     const colorScheme = useColorScheme();
     const [loading, setLoading] = useState(false);
+    const [showForm, setShowForm] = useState(false);
+
+    const biometricVerification = useCallback(() => {
+        (async () => {
+            setLoading(true);
+            try {
+                const storedRefreshToken = await SecureStore.getItemAsync('refreshToken');
+                console.log('Stored refresh token:', storedRefreshToken);
+                if (!storedRefreshToken) {
+                    setShowForm(true);
+                    setLoading(false);
+                    return;
+                }
+                // Prompt for biometrics
+                const biometricResult = await LocalAuthentication.authenticateAsync({
+                    promptMessage: 'Verify your identity to continue',
+                });
+                console.log('Biometric result:', biometricResult);
+                if (!biometricResult.success) {
+                    setShowForm(true);
+                    setLoading(false);
+                    return;
+                }
+                // Attempt refresh
+                const response = await api.post('/refresh-token', {
+                    refresh_token: storedRefreshToken,
+                });
+                await SecureStore.setItemAsync('accessToken', response.data.access_token);
+                router.replace('/(restricted)/timer');
+            } catch (err) {
+                setShowForm(true);
+                console.error(err);
+                await SecureStore.deleteItemAsync('accessToken');
+                await SecureStore.deleteItemAsync('refreshToken');
+            } finally {
+                setLoading(false);
+            }
+        })();
+    }, [router]);
+
+    React.useEffect(() => {
+        biometricVerification();
+    }, [biometricVerification]);
+
     return (
         <View
             style={[
@@ -40,17 +88,22 @@ export default function Login() {
                 autoCorrect={false}
                 autoComplete="off"
             />
-            <TextInput
-                style={[styles.input, { color: colorScheme === 'dark' ? 'white' : 'black' }]}
-                placeholder="Password"
-                placeholderTextColor="#aaa"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="off"
-            />
+            <View style={styles.passwordContainer}>
+                <TextInput
+                    style={{ flex: 1, color: colorScheme === 'dark' ? 'white' : 'black' }}
+                    placeholder="Password"
+                    placeholderTextColor="#aaa"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!visible}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="off"
+                />
+                <TouchableOpacity onPress={() => setVisible((v) => !v)}>
+                    <FontAwesome name={visible ? 'eye' : 'eye-slash'} size={24} color="#888" />
+                </TouchableOpacity>
+            </View>
             <View
                 style={{
                     alignItems: 'center',
@@ -85,10 +138,11 @@ export default function Login() {
                             // Normally you’d validate credentials with an API
                             api.post('/login', { email, password })
                                 .then(
-                                    (
+                                    async (
                                         response: AxiosResponse<{
                                             message: string;
-                                            token: string;
+                                            access_token: string;
+                                            refresh_token: string;
                                             user: {
                                                 created_at: string;
                                                 email: string;
@@ -98,7 +152,14 @@ export default function Login() {
                                         }>,
                                     ) => {
                                         // Handle successful login
-                                        SecureStore.setItemAsync('authToken', response.data.token);
+                                        await SecureStore.setItemAsync(
+                                            'accessToken',
+                                            response.data.access_token,
+                                        );
+                                        await SecureStore.setItemAsync(
+                                            'refreshToken',
+                                            response.data.refresh_token,
+                                        );
                                         router.replace('/(restricted)/timer');
                                     },
                                 )
@@ -138,6 +199,17 @@ const styles = StyleSheet.create({
         padding: 14,
         borderRadius: 12,
         marginBottom: 15,
+        borderWidth: 1,
+        borderColor: '#aaa',
+        color: '#aaa',
+    },
+    passwordContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 15,
+        paddingHorizontal: 14,
+        paddingVertical: 5,
+        borderRadius: 12,
         borderWidth: 1,
         borderColor: '#aaa',
         color: '#aaa',

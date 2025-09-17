@@ -18,7 +18,8 @@ api.interceptors.response.use(
         if (response.status === 401) {
             // Handle unauthorized responses
             console.error('Unauthorized access - perhaps you need to log in?');
-            await SecureStore.deleteItemAsync('authToken'); // Clear token
+            await SecureStore.deleteItemAsync('accessToken'); // Clear token
+            await SecureStore.deleteItemAsync('refreshToken'); // Clear refresh token
             return Promise.reject(new Error('Unauthorized'));
         }
         // Handle successful responses

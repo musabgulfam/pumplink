@@ -4,10 +4,12 @@ export function Button({
     title,
     onPress,
     viewStyle,
+    disabled,
 }: {
     title: string;
     onPress: () => void;
     viewStyle?: ViewStyle;
+    disabled?: boolean;
 }) {
     return (
         <TouchableOpacity
@@ -25,6 +27,7 @@ export function Button({
                 viewStyle,
             ]}
             onPress={onPress}
+            disabled={disabled}
         >
             <Text
                 style={[
