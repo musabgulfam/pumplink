@@ -24,7 +24,7 @@ export default function Login() {
     const router = useRouter();
     const colorScheme = useColorScheme();
     const [loading, setLoading] = useState(false);
-    const [showForm, setShowForm] = useState(true);
+    const [showForm, setShowForm] = useState(false);
 
     const biometricVerification = useCallback(() => {
         (async () => {
