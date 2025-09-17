@@ -64,11 +64,9 @@ export default function Login() {
         })();
     }, [router]);
 
-    useFocusEffect(
-        useCallback(() => {
-            biometricVerification();
-        }, [biometricVerification]),
-    );
+    React.useEffect(() => {
+        biometricVerification();
+    }, [biometricVerification]);
 
     return (
         <View
