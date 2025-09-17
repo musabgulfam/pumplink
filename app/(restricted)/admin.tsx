@@ -1,6 +1,6 @@
-import { router } from '@/.expo/types/router';
 import { api } from '@/api';
 import { AxiosError } from 'axios';
+import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
@@ -8,6 +8,7 @@ import { Alert, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 
 export default function AdminScreen() {
     const colorScheme = useColorScheme();
     const [disabled, setDisabled] = useState(false);
+    const router = useRouter();
     // TODO: Replace with dynamic device selection logic as needed
     const deviceId = 1;
     const handleForceOff = useCallback(async () => {
