@@ -3,7 +3,7 @@ import { Button } from '@/components';
 import { FontAwesome } from '@expo/vector-icons';
 import { AxiosResponse } from 'axios';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useState } from 'react';
 import {
@@ -24,7 +24,6 @@ export default function Login() {
     const router = useRouter();
     const colorScheme = useColorScheme();
     const [loading, setLoading] = useState(false);
-    const [showForm, setShowForm] = useState(false);
 
     const biometricVerification = useCallback(() => {
         (async () => {
@@ -33,7 +32,6 @@ export default function Login() {
                 const storedRefreshToken = await SecureStore.getItemAsync('refreshToken');
                 console.log('Stored refresh token:', storedRefreshToken);
                 if (!storedRefreshToken) {
-                    setShowForm(true);
                     setLoading(false);
                     return;
                 }
@@ -43,7 +41,6 @@ export default function Login() {
                 });
                 console.log('Biometric result:', biometricResult);
                 if (!biometricResult.success) {
-                    setShowForm(true);
                     setLoading(false);
                     return;
                 }
@@ -54,7 +51,6 @@ export default function Login() {
                 await SecureStore.setItemAsync('accessToken', response.data.access_token);
                 router.replace('/(restricted)/timer');
             } catch (err) {
-                setShowForm(true);
                 console.error(err);
                 await SecureStore.deleteItemAsync('accessToken');
                 await SecureStore.deleteItemAsync('refreshToken');

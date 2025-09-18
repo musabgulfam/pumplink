@@ -1,6 +1,7 @@
 import { api } from '@/api';
 import { Button } from '@/components';
 import Dial from '@/components/Dial';
+import { AxiosError } from 'axios';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
@@ -28,9 +29,10 @@ export default function Timer() {
                 console.log('Push token registered successfully');
             } catch (error) {
                 console.error('Failed to register push token:', error);
-                await SecureStore.deleteItemAsync('accessToken');
-                await SecureStore.deleteItemAsync('refreshToken');
-                router.replace('/(auth)/login');
+                if (error instanceof AxiosError && error?.response?.status === 401) {
+                    await SecureStore.deleteItemAsync('accessToken');
+                    router.replace('/(auth)/login');
+                }
             }
         },
         [router],
