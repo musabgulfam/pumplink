@@ -19,7 +19,6 @@ api.interceptors.response.use(
             // Handle unauthorized responses
             console.error('Unauthorized access - perhaps you need to log in?');
             await SecureStore.deleteItemAsync('accessToken'); // Clear token
-            await SecureStore.deleteItemAsync('refreshToken'); // Clear refresh token
             return Promise.reject(new Error('Unauthorized'));
         }
         // Handle successful responses

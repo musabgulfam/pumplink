@@ -58,7 +58,6 @@ export const ConnectionProvider = ({ children }: { children: React.ReactNode }) 
 
             if (msg.code === 1008) {
                 await SecureStore.deleteItemAsync('accessToken');
-                await SecureStore.deleteItemAsync('refreshToken');
                 router.replace('/(auth)/login');
             }
         };
