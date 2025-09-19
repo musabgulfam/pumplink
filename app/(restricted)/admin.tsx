@@ -34,14 +34,15 @@ export default function AdminScreen() {
                     error.response.data.error
                 ) {
                     const status = error.response.status;
-                    if (status === 403) {
-                        setDisabled(true);
-                        Alert.alert('Error', error.response.data.error);
-                    }
-                    else if (status === 401) {
+                    if (status === 401) {
                         await SecureStore.deleteItemAsync('accessToken');
                         router.replace('/(auth)/login');
-                    }
+                    } else if (status === 403) {
+                        setDisabled(true);
+                        Alert.alert('Error', error?.response?.data?.error || 'Action not allowed');
+                    } else if (status === 404) {
+                        Alert.alert('Error', error?.response?.data?.error || 'Not found');
+                    } 
                 }
                 console.error('Error:', error);
             });
