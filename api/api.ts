@@ -1,8 +1,8 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
 export const api = axios.create({
-    baseURL: 'https://pumplink-backend-production.up.railway.app/api/v1',
+    baseURL: 'https://api-staging.pumplink.dev/api/v1',
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json',
@@ -14,7 +14,7 @@ export const api = axios.create({
 // api.interceptors.response.use(...)
 
 api.interceptors.response.use(
-    async (response) => {
+    async (response: AxiosResponse) => {
         if (response.status === 401) {
             // Handle unauthorized responses
             console.error('Unauthorized access - perhaps you need to log in?');
